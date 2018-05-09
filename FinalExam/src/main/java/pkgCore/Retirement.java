@@ -22,21 +22,37 @@ public class Retirement {
 		this.dMonthlySSI = dMonthlySSI;
 	}
 
-	public double AmountToSave() {
+	public double MonthlySavings() {
 
-		double dMonthsToWork = iYearsToWork * 12;
-		dAnnualReturnWorking = (dAnnualReturnWorking / 100) / 12;
-		double pmt = FinanceLib.pmt(dAnnualReturnWorking, dMonthsToWork, 0, this.TotalAmountSaved(), false);
-		pmt = Math.round(pmt * 100.0) / 100.0;
+		//TODO: Calculate AmountToSave
+		double pmt = 0; // <-- this should be fixed to calculate the real pmt
 		return pmt;
 	}
 
-	public double TotalAmountSaved() {
-		double iMonthsRetired = iYearsRetired * 12;
-		double dMonthlyReturnRetired = (dAnnualReturnRetired / 100) / 12;
-		double pv = FinanceLib.pv(dMonthlyReturnRetired, iMonthsRetired, dRequiredIncome - dMonthlySSI, 0, false);
-		pv = Math.round(pv * 100.0) / 100.0;
+	public double TotalAmountToSave() {
+		
+		//TODO: Calculate the Total Amount Requried to save
+		double pv = 0;
+		//	Hint: Here's how to round a number: pv = Math.round(pv * 100.0) / 100.0;
 		return pv;
+	}
+
+	public static double PMT(double r, double n, double p, double f, boolean t) {
+		//	r = Rate
+		//	n = number of payments
+		//	p = present value
+		//	f = future value
+		//	t = boolean... when interest is calculated... we're going to use FALSE
+		return FinanceLib.pmt(r, n, p, f, t);
+	}
+
+	public static double PV(double r, double n, double y, double f, boolean t) {
+		//	r = Rate.  7% would be expressed as...  0.07 / 12
+		//	n = Number of payments.  Five years would be expressed as...  5 * 12...  or 60
+		//	y = PMT amount
+		//	f = Future value
+		//	t = boolean... when interest is calculated... we're going to use FALSE
+		return FinanceLib.pv(r, n, y, f, t);
 	}
 
 	public int getiYearsToWork() {

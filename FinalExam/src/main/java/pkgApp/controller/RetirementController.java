@@ -1,6 +1,10 @@
 package pkgApp.controller;
 
 import java.net.URL;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.Iterator;
+import java.util.Map;
 import java.util.ResourceBundle;
 
 import org.apache.poi.ss.formula.functions.FinanceLib;
@@ -14,6 +18,12 @@ import javafx.scene.control.Alert;
 import javafx.scene.control.Alert.AlertType;
 import javafx.scene.control.TextField;
 import javafx.scene.text.FontWeight;
+import javafx.scene.control.TextFormatter;
+import javafx.stage.Stage;
+import javafx.util.converter.NumberStringConverter;
+
+import javafx.beans.value.*;
+
 import pkgApp.RetirementApp;
 import pkgCore.Retirement;
 
@@ -37,6 +47,8 @@ public class RetirementController implements Initializable {
 	@FXML
 	private TextField txtMonthlySSI;
 
+	private HashMap<TextField, String> hmTextFieldRegEx = new HashMap<TextField, String>();
+
 	public RetirementApp getMainApp() {
 		return mainApp;
 	}
@@ -47,158 +59,77 @@ public class RetirementController implements Initializable {
 
 	@Override
 	public void initialize(URL location, ResourceBundle resources) {
+
+		// Adding an entry in the hashmap for each TextField control I want to validate
+		// with a regular expression
+		// "\\d*?" - means any decimal number
+		// "\\d*(\\.\\d*)?" means any decimal, then optionally a period (.), then
+		// decmial
+		hmTextFieldRegEx.put(txtYearsToWork, "\\d*?");
+		hmTextFieldRegEx.put(txtAnnualReturnWorking, "\\d*(\\.\\d*)?");
+
+		// Check out these pages (how to validate controls):
+		// https://stackoverflow.com/questions/30935279/javafx-input-validation-textfield
+		// https://stackoverflow.com/questions/40485521/javafx-textfield-validation-decimal-value?rq=1
+		// https://stackoverflow.com/questions/8381374/how-to-implement-a-numberfield-in-javafx-2-0
+		// There are some examples on how to validate / check format
+
+		Iterator it = hmTextFieldRegEx.entrySet().iterator();
+		while (it.hasNext()) {
+			Map.Entry pair = (Map.Entry) it.next();
+			TextField txtField = (TextField) pair.getKey();
+			String strRegEx = (String) pair.getValue();
+
+			txtField.focusedProperty().addListener(new ChangeListener<Boolean>() {
+				@Override
+				public void changed(ObservableValue<? extends Boolean> arg0, Boolean oldPropertyValue,
+						Boolean newPropertyValue) {
+					// If newPropertyValue = true, then the field HAS FOCUS
+					// If newPropertyValue = false, then field HAS LOST FOCUS
+					if (!newPropertyValue) {
+						if (!txtField.getText().matches(strRegEx)) {
+							txtField.setText("");
+							txtField.requestFocus();
+						}
+					}
+				}
+			});
+		}
+
+		//
+		// TODO: Validate Working Annual Return %, accept only numbers and decimals
+		// TODO: Validate Years retired, accepted only decimals
+		// TODO: Validate Retired Annual Return %, accept only numbers and deciamls
+		// TODO: Validate Required Income, accept only decimals
+		// TODO: Validate Monthly SSI, accept only decimals
 	}
 
 	@FXML
 	public void btnClear(ActionEvent event) {
 		System.out.println("Clear pressed");
-		txtSaveEachMonth.clear();
-		txtYearsToWork.clear();
-		txtAnnualReturnWorking.clear();
-		txtWhatYouNeedToSave.clear();
-		txtYearsRetired.clear();
-		txtAnnualReturnRetired.clear();
-		txtRequiredIncome.clear();
-		txtMonthlySSI.clear();
+
+		// disable read-only controls
 		txtSaveEachMonth.setDisable(true);
 		txtWhatYouNeedToSave.setDisable(true);
+
+		// Clear, enable txtYearsToWork
+		txtYearsToWork.clear();
 		txtYearsToWork.setDisable(false);
-		txtAnnualReturnWorking.setDisable(false);
-		txtYearsRetired.setDisable(false);
-		txtAnnualReturnRetired.setDisable(false);
-		txtRequiredIncome.setDisable(false);
-		txtMonthlySSI.setDisable(false);
+
+		// TODO: Clear, enable the rest of the input controls. Hint! You already have a
+		// HashMap of all the input controls....!!!!
 	}
 
 	@FXML
-	public void btnCalculate(ActionEvent event) {
+	public void btnCalculate() {
 
-		if (isInputValid2()) {
+		System.out.println("calculating");
 
-			txtSaveEachMonth.setDisable(false);
-			txtWhatYouNeedToSave.setDisable(false);
+		txtSaveEachMonth.setDisable(false);
+		txtWhatYouNeedToSave.setDisable(false);
 
-			double dAnnualReturnRetired = Double.parseDouble(txtAnnualReturnRetired.getText());
-			int iYearsRetired = Integer.parseInt(txtYearsRetired.getText());
-			double dRequiredIncome = Double.parseDouble(txtRequiredIncome.getText());
-			double dMonthlySSI = Double.parseDouble(txtMonthlySSI.getText());
-			double dAnnualReturnWorking = Double.parseDouble(txtAnnualReturnWorking.getText());
-			int iYearsToWork = Integer.parseInt(txtYearsToWork.getText());
-
-			Retirement retirement = new Retirement(iYearsToWork, dAnnualReturnWorking, iYearsRetired,
-					dAnnualReturnRetired, dRequiredIncome, dMonthlySSI);
-
-			double pv = retirement.TotalAmountSaved();
-
-			double pmt = retirement.AmountToSave();
-
-			txtWhatYouNeedToSave.setText(Double.toString(pv));
-			txtSaveEachMonth.setText(Double.toString(pmt));
-			txtYearsToWork.setDisable(true);
-			txtAnnualReturnWorking.setDisable(true);
-			txtYearsRetired.setDisable(true);
-			txtAnnualReturnRetired.setDisable(true);
-			txtRequiredIncome.setDisable(true);
-			txtMonthlySSI.setDisable(true);
-		}
+		// TODO: Calculate txtWhatYouNeedToSave value...
+		// TODO: Then calculate txtSaveEachMonth, using amount from txtWhatYouNeedToSave
+		// as input
 	}
-
-	private boolean isInputValid2() {
-		String errorMessage = "";
-		try {
-			if (txtYearsToWork.getText() == null || txtYearsToWork.getText().length() == 0
-					|| Integer.parseInt(txtYearsToWork.getText()) < 0) {
-				errorMessage += "The number of years to work must be a whole number (an integer greater than or equal to 0).  "
-						+ "Only numbers are accepted as input. \n\n";
-			}
-		} catch (NumberFormatException e) {
-			errorMessage += "The number of years to work must be a whole number (an integer greater than or equal to 0).  "
-					+ "Only numbers are accepted as input. \n\n";
-		}
-
-		// I believe this assignment wanted us to check to make sure the annual working
-		// return
-		// rate is between 0 and 20. The assignment said "Use a range of 0-20% for
-		// annual return when in investment mode.
-		try {
-			if (txtAnnualReturnWorking.getText() == null || txtAnnualReturnWorking.getText().length() == 0
-					|| Double.parseDouble(txtAnnualReturnWorking.getText()) < 0
-					|| Double.parseDouble(txtAnnualReturnWorking.getText()) > 20) {
-				errorMessage += "The working annual return must be a number greater than or equal to 0"
-						+ " and less than or equal to 20.  "
-						+ "Only numbers and one decimal point are accepted as input. \n\n";
-			}
-		} catch (NumberFormatException e) {
-			errorMessage += "The working annual return must be a number greater than or equal to 0"
-					+ " and less than or equal to 20.  "
-					+ "Only numbers and one decimal point are accepted as input. \n\n";
-		}
-
-		try {
-			if (txtYearsRetired.getText() == null || txtYearsRetired.getText().length() == 0
-					|| Integer.parseInt(txtYearsRetired.getText()) < 0) {
-				errorMessage += "The number of years retired must be a whole number (an integer greater than or equal to 0).  "
-						+ "Only numbers are accepted as input. \n\n";
-			}
-		} catch (NumberFormatException e) {
-			errorMessage += "The number of years retired must be a whole number (an integer greater than or equal to 0).  "
-					+ "Only numbers are accepted as input. \n\n";
-		}
-
-		// I believe this assignment wanted us to check to make sure the annual retired
-		// return
-		// rate is between 0% and 3%. The assignment said "Use a range of 0-3% for
-		// annual return when in payback mode."
-		try {
-			if (txtAnnualReturnRetired.getText() == null || txtAnnualReturnRetired.getText().length() == 0
-					|| Double.parseDouble(txtAnnualReturnRetired.getText()) < 0
-					|| Double.parseDouble(txtAnnualReturnRetired.getText()) > 3)
-
-			{
-				errorMessage += "The retired annual return must be a number greater than or equal to 0 "
-						+ "and less than or equal to 3.  "
-						+ "Only numbers and one decimal point are accepted as input. \n\n";
-			}
-		} catch (NumberFormatException e) {
-			errorMessage += "The retired annual return must be a number greater than or equal to 0 "
-					+ "and less than or equal to 3.  "
-					+ "Only numbers and one decimal point are accepted as input. \n\n";
-		}
-
-		try {
-			if (txtRequiredIncome.getText() == null || txtRequiredIncome.getText().length() == 0
-					|| Double.parseDouble(txtRequiredIncome.getText()) < 0) {
-				errorMessage += "The required income must be a number greater than or equal to 0.  "
-						+ "Only numbers and one decimal point are accepted as input. \n\n";
-			}
-		} catch (NumberFormatException e) {
-			errorMessage += "The required income must be a number greater than or equal to 0.  "
-					+ "Only numbers and one decimal point are accepted as input. \n\n";
-		}
-
-		try {
-			if (txtMonthlySSI.getText() == null || txtMonthlySSI.getText().length() == 0
-					|| Double.parseDouble(txtMonthlySSI.getText()) < 0) {
-				errorMessage += "The monthly SSI must be a number greater than or equal to 0.  "
-						+ "Only numbers and one decimal point are accepted as input. \n\n";
-			}
-		} catch (NumberFormatException e) {
-			errorMessage += "The monthly SSI must be a number greater than or equal to 0.  "
-					+ "Only numbers and one decimal point are accepted as input. \n\n";
-		}
-
-		if (errorMessage.length() == 0) {
-			return true;
-		} else {
-			Alert alert = new Alert(AlertType.ERROR);
-			alert.setTitle("Invalid Fields");
-			alert.setHeaderText("Please correct the invalid field(s).");
-			alert.setContentText(errorMessage);
-
-			alert.showAndWait();
-
-			return false;
-		}
-	}
-
 }
