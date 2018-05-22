@@ -39,5 +39,34 @@ public class TestFinance {
 	public void TestPMT() {
 
 		//TODO: Test PMT.  Make sure PMT works as expected.
+		
+		int iYearsToWork = 40;
+		double dAnnualReturnWorking = 0.07;
+		int iYearsRetired = 20;
+		double dAnnualReturnRetired = 0.02;
+		double dRequiredIncome = 10000;
+		double dMonthlySSI = 2642;
+		
+		double pv = Retirement.PV(dAnnualReturnRetired/12, iYearsRetired*12, dRequiredIncome-dMonthlySSI, 0, false);
+		double pmt = Retirement.PMT(dAnnualReturnWorking/12, iYearsToWork * 12, 0, pv, false);
+		
+		System.out.println(pmt); 
+		
+		assertEquals(554.13, pmt, 0.01);
 	}
+	
+	@Test
+	public void testPVAndPMT() {
+	
+	int newYearsToWork = 40;
+	double newAnnualReturnWorking = 0.07;
+	int newYearsRetired = 20;
+	double newAnnualReturnRetired = 0.02;
+	double newRequiredIncome = 10000;
+	double newMonthlySSI = 2642;
+	
+	Retirement sampleRetirement = new Retirement(newYearsToWork, newAnnualReturnWorking, newYearsRetired, newAnnualReturnRetired, newRequiredIncome, newMonthlySSI );
+	assertEquals(554.13, sampleRetirement.MonthlySavings(), 0.01);
+	assertEquals(1454485.55,Math.abs(sampleRetirement.TotalAmountToSave()),0.01);
+}
 }
